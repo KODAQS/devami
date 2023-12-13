@@ -1,0 +1,90 @@
+---
+title: "Principal component analysis"
+format: html
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(psych)
+
+packageVersion("rio")
+packageVersion("psych")
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Build character vector with variable names for use below
+
+```{r}
+ext <- c(
+    "bfi2_1", "bfi2_6", "bfi2_11R", "bfi2_16R", "bfi2_21", "bfi2_26R",
+    "bfi2_31R", "bfi2_36R", "bfi2_41", "bfi2_46", "bfi2_51R",
+    "bfi2_56"
+)
+```
+
+Conduct parallel analysis, print eigen values and display screeplot
+
+Function with arguments specified below corresponds to default 
+20 resampled or simulated random datasets are used and the empirical eigen values are compared to the mean of the resampled or simulated eigenvalues; Suitable for the use of continuous data
+
+Alternatives to default settings:
+Increase number of resampled or simulated datasets (e.g., to n.iter = 100) and choose a quantile of resampled/simulated data to compare     the empirical eigenvalues against (e.g., `quant = .95`; the suggested number of components likely might decrease with a high value for quant)
+
+When using categorical data: specify `cor = "poly"`.
+
+Info: Plots can be saved as image or pdf via click on Export
+
+```{r}
+fa.parallel(example1[ext],
+    fa = "pc",
+    n.iter = 20, # quant = .95,
+    cor = "cor"
+)$fa.values
+```
+
+
+## Conduct PCA
+
+Function below specifies the following:  
+- extraction of 3 components
+- no rotation (i.e., initial (orthogonal) component solution)
+- suitable for the use of continuous data
+
+
+Alternative specification of arguments:  
+- orthogonal rotation: specify rotation = "varimax"
+- oblique rotation: specify `rotation = "oblimin"` or `rotation = "promax"` (the latter includes Kaiser normalization)
+- obtain oblique component scores based on pattern matrix: `oblique.scores = FALSE`
+- when using categorical data: specify `cor = "poly"`
+
+```{r}
+myPCA <- principal(example1[ext],
+    nfactors = 3,
+    rotate = "none",
+    oblique.scores = T,
+    cor = "cor"
+)
+myPCA
+```

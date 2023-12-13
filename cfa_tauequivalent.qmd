@@ -1,0 +1,77 @@
+---
+title: "Confirmatory factor analysis - Testing a tau-equivalent measurement model"
+format: html
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(lavaan)
+
+packageVersion("rio")
+packageVersion("lavaan")
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Specify and estimate essentially tau-equivalent measurement model
+
+```{r}
+SOC_TE <- 'SOC =~ 1*bfi2_1 + 1*bfi2_16R + 1*bfi2_31R + 1*bfi2_46'
+SOC_TE.M1<-cfa(SOC_TE, data = example1, estimator = "MLR") 
+```
+Estimate model using robust maximum likelihood estimation. If data is categorical specify `estimator = "WLSMV"` and additionally specify `ordered = [character vector of variable names]`.
+
+Default for missing data handling is listwise deletion. For the use of FIML additionally specify `missing = "ML"`
+
+If an attempt should be made to mimic the Mplus program, specify `mimic = "Mplus"`
+
+```{r}
+summary(SOC_TE.M1, standardized = TRUE, fit.measures = TRUE) 
+```
+
+Specify tau-congeneric measurement model for chi-square difference test.
+
+```{r}
+SOC_TC <- 'SOC =~ NA*bfi2_1 + bfi2_16R + bfi2_31R + bfi2_46
+          SOC ~~ 1*SOC'
+SOC_TC.M1<-cfa(SOC_TC, data = example1, estimator = "MLR") 
+
+```
+Estimate model using robust maximum likelihood estimation. If data is categorical specify `estimator = "WLSMV"` and additionally specify `ordered = [character vector of variable names]`.
+
+Default for missing data handling is listwise deletion. For the use of FIML additionally specify `missing = "ML"`
+
+If an attempt should be made to mimic the Mplus program, specify mimic = "Mplus"
+
+```{r}
+summary(SOC_TC.M1, standardized = TRUE, fit.measures = TRUE)
+```
+
+Conduct chi-square difference test between essentially tau-equivalent and tau-congeneric model
+
+```{r}
+chisq.diff <- fitMeasures(SOC_TE.M1)[["chisq.scaled"]] - fitMeasures(SOC_TC.M1)[["chisq.scaled"]]
+df.diff <- fitMeasures(SOC_TE.M1)[["df.scaled"]] - fitMeasures(SOC_TC.M1)[["df.scaled"]]
+pchisq(chisq.diff, df.diff, lower.tail = FALSE)
+```
