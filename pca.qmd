@@ -49,8 +49,8 @@ Conduct parallel analysis, print eigen values and display screeplot
 Function with arguments specified below corresponds to default 
 20 resampled or simulated random datasets are used and the empirical eigen values are compared to the mean of the resampled or simulated eigenvalues; Suitable for the use of continuous data
 
-Alternatives to default settings:
-Increase number of resampled or simulated datasets (e.g., to n.iter = 100) and choose a quantile of resampled/simulated data to compare     the empirical eigenvalues against (e.g., `quant = .95`; the suggested number of components likely might decrease with a high value for quant)
+Alternatives to default settings:  
+Increase number of resampled or simulated datasets (e.g., to n.iter = 100) and choose a quantile of resampled/simulated data to compare the empirical eigenvalues against (e.g., `quant = .95`; the suggested number of components likely might decrease with a high value for quant)
 
 When using categorical data: specify `cor = "poly"`.
 
@@ -68,15 +68,22 @@ fa.parallel(example1[ext],
 ## Conduct PCA
 
 Function below specifies the following:  
+
 - extraction of 3 components
+
 - no rotation (i.e., initial (orthogonal) component solution)
+
 - suitable for the use of continuous data
 
 
 Alternative specification of arguments:  
+
 - orthogonal rotation: specify rotation = "varimax"
+
 - oblique rotation: specify `rotation = "oblimin"` or `rotation = "promax"` (the latter includes Kaiser normalization)
+
 - obtain oblique component scores based on pattern matrix: `oblique.scores = FALSE`
+
 - when using categorical data: specify `cor = "poly"`
 
 ```{r}

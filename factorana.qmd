@@ -44,15 +44,19 @@ ext <- c(
 ```
 
 
-Conduct parallel analysis, print eigen values and display screeplot
+## Conduct parallel analysis, print eigen values and display screeplot
 
 Function with arguments specified below corresponds to default: 
+
 - Eigenvalues are found based on the communalities of a one factor minres EFA solution; 
+
 - 20 resampled or simulated random datasets are used and the empirical eigen values are compared to the mean of the resampled or simulated eigenvalues; 
+
 - suitable for the use of continuous data
 
 Alternatives to default settings:  
 - Find eigenvalues based on iterating for communalities starting with squared multiple correlations: specify `fm = NULL`, `nfactors = NULL`, `SMC = TRUE` (suggested number of factors reflects both major and minor factors; thus, suggested number of factors usually higher than when using default settings)
+
 - Increase number of resampled or simulated datasets (e.g., to `n.iter = 100`) and choose a quantile of resampled/simulated data to compare the empirical eigenvalues against (e.g., `quant = .95`; the suggested number of factors likely might decrease with a high value for `quant`)
 
 - When using categorical data: specify `cor = "poly"`
@@ -70,20 +74,33 @@ fa.parallel(example1[ext],
 
 Function below specifies the following:  
 - extraction of 3 factors;
+
 - orthogonal rotation using "varimax" rotation;
+
 - using regression to find factor scores;
+
 - using squared multiple correlations as initial communality estimates;
+
 - suitable for the use of continuous data
 
 Alternatives to default settings:  
+
 - no rotation (i.e., initial orthogonal solution): specify `rotate = "none"`
+
 - oblique rotation: specify `rotation = "oblimin"` (corresponds to default) or `rotation = "promax"` (the latter includes Kaiser normalization)
-- obtain oblique factor scores: use ten Berge's correlation-preserving approach and the pattern matrix to find factor scores: specify `scores = "tenBerge"`, oblique scores = T
+
+- obtain oblique factor scores: use ten Berge's correlation-preserving approach and the pattern matrix to find factor scores: specify `scores = "tenBerge"`, `oblique.scores = TRUE`
+
 - When using categorical data: specify `cor = "poly"`
-myPAF <- fa(example1[ext], fm = "pa",
-   nfactors = 3,
-   rotate = "varimax",
-   scores = "regression", oblique.scores = F,
-   SMC = TRUE,
-   cor = "cor")
+
+```{r}
+myPAF <- fa(example1[ext],
+    fm = "pa",
+    nfactors = 3,
+    rotate = "varimax",
+    scores = "regression", oblique.scores = F,
+    SMC = TRUE,
+    cor = "cor"
+)
 myPAF
+```
