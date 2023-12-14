@@ -1,6 +1,16 @@
 ---
 title: "Exploratory factor analysis (principal axis factoring)"
 format: html
+author:
+    - Melanie Viola Partsch
+    - Katharina Groskurth
+    - Matthias Blümke
+    - Isabelle Schmidt
+keywords:
+  - Survey Data
+  - Measurement
+  - Validity
+license: "CC BY-NC 4.0"
 citation: 
     type: "document"
     title: |

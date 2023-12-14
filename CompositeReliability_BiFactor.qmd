@@ -1,0 +1,142 @@
+---
+title: "Composite Reliability - ECV und Omega-H - for BiFactor Model"
+format: html
+author:
+    - Melanie Viola Partsch
+    - Katharina Groskurth
+    - Matthias Blümke
+    - Isabelle Schmidt
+keywords:
+  - Survey Data
+  - Measurement
+  - Validity
+license: "CC BY-NC 4.0"
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(lavaan)
+library(semTools)
+library(BifactorIndicesCalculator)
+
+packageVersion("rio")
+packageVersion("lavaan")
+packageVersion("semTools")
+packageVersion("BifactorIndicesCalculator")
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Specify and estimate bifactor model
+
+```{r}
+EXT_BF <- "
+ARS =~ 1*bfi2_1 + (-1)*bfi2_16R + (-1)*bfi2_31R + 1*bfi2_46
+  + 1*bfi2_6 + 1*bfi2_21 + (-1)*bfi2_36R + (-1)*bfi2_51R
+  + (-1)*bfi2_11R + (-1)*bfi2_26R + 1*bfi2_41 + 1*bfi2_56
+EXT =~ NA*bfi2_1 + bfi2_16R + bfi2_31R + bfi2_46
+  + bfi2_6 + bfi2_21 + bfi2_36R + bfi2_51R
+  + bfi2_11R + bfi2_26R + bfi2_41 + bfi2_56
+SOC =~ NA*bfi2_1 + bfi2_16R + bfi2_31R + bfi2_46
+ASS =~ NA*bfi2_6 + bfi2_21 + bfi2_36R + bfi2_51R
+ENL =~ NA*bfi2_11R + bfi2_26R + bfi2_41 + bfi2_56
+EXT ~~ 1*EXT
+SOC ~~ 1*SOC
+ASS ~~ 1*ASS
+ENL ~~ 1*ENL
+ARS ~~ 0*EXT
+ARS ~~ 0*SOC
+ARS ~~ 0*ASS
+ARS ~~ 0*ENL
+EXT ~~ 0*SOC
+EXT ~~ 0*ASS
+EXT ~~ 0*ENL
+SOC ~~ 0*ASS
+SOC ~~ 0*ENL
+ASS ~~ 0*ENL
+"
+EXT_BF.M1 <- cfa(EXT_BF, data = example1, estimator = "MLR")
+```
+
+Default for missing data handling is listwise deletion. For the use of FIML additionally specify `missing = "ML"`.
+
+
+Compute omega-h coefficient of g-factor
+
+```{r}
+omega_h <- reliability(EXT_BF.M1)
+omega_h
+```
+
+Omega-h coefficient to report
+```{r}
+round(omega_h[3, 2], digits = 3)
+```
+
+Compute ECV coefficient (explained common variance) of g-factor
+
+```{r}
+EXT_BF.M1_Load <- inspect(EXT_BF.M1, what = "est")$lambda
+ECV <- ECV_GS(EXT_BF.M1_Load[, 2:5])
+ECV
+```
+
+ECV coefficient to report.
+```{r}
+round(ECV[[1]], digits = 3)
+```
+
+Determine confidence intervals of omega coefficient (determination of confidence intervals of ECV is not possible with function below and not yet implemented in an alternative way)
+
+Info: It can take several minutes to run this part of the code; warnings can be ignored
+
+```{r}
+EXT.items <- example1[, c(
+    "bfi2_1", "bfi2_6", "bfi2_11R", "bfi2_16R", "bfi2_21",
+    "bfi2_26R", "bfi2_31R", "bfi2_36R", "bfi2_41", "bfi2_46", "bfi2_51R", "bfi2_56"
+)]
+N <- nrow(EXT.items)
+R <- 1000
+omega.boot <- NULL
+for (i in 1:R) {
+    idx <- sample.int(N, N, replace = TRUE)
+    EXT_BF.M1_BS <- cfa(EXT_BF, data = EXT.items[idx, ], estimator = "MLR")
+    omega.boot[i] <- round(semTools::reliability(EXT_BF.M1_BS)[3, 2], digits = 3)
+}
+```
+
+90% confidence interval of omega coefficient
+
+```{r}
+round(quantile(omega.boot, c(0.05, 0.95)), digits = 3)
+```
+
+95% confidence interval of omega coefficient
+
+```{r}
+round(quantile(omega.boot, c(0.025, 0.975)), digits = 3)
+```
+99% confidence interval of omega coefficient
+
+```{r}
+round(quantile(omega.boot, c(0.005, 0.995)), digits = 3)
+```

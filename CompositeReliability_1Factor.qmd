@@ -1,0 +1,117 @@
+---
+title: "Composite Reliability of Unidimensional Model - AVE und Omega"
+format: html
+author:
+    - Melanie Viola Partsch
+    - Katharina Groskurth
+    - Matthias Blümke
+    - Isabelle Schmidt
+keywords:
+  - Survey Data
+  - Measurement
+  - Validity
+license: "CC BY-NC 4.0"
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(lavaan)
+library(semTools)
+
+packageVersion("rio")
+packageVersion("lavaan")
+packageVersion("semTools")
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Specify and estimate tau-congeneric measurement model
+
+```{r}
+SOC_TC <- "SOC =~ NA*bfi2_1 + bfi2_16R + bfi2_31R + bfi2_46
+          SOC ~~ 1*SOC"
+SOC_TC.M1 <- cfa(SOC_TC, data = example1, estimator = "MLR")
+```
+
+Default for missing data handling is listwise deletion. For the use of FIML additionally specify `missing = "ML"`
+
+Compute omega and AVE (average variance extracted) coefficient using the reliability funtion of the semTools package
+```{r}
+omega_1F <- semTools::reliability(SOC_TC.M1)
+omega_1F
+```
+
+omega coefficient to report
+
+```{r}
+round(omega_1F[2, 1], digits = 3)
+```
+
+AVE coefficient to report
+
+```{r}
+round(omega_1F[5, 1], digits = 3)
+```
+
+Determine confidence intervals of omega and AVE coefficients
+
+```{r}
+SOC.items <- example1[, c("bfi2_1", "bfi2_16R", "bfi2_31R", "bfi2_46")]
+N <- nrow(SOC.items)
+R <- 1000
+omega.boot <- NULL
+AVE.boot <- NULL
+for (i in 1:R) {
+    idx <- sample.int(N, N, replace = TRUE)
+    SOC_TC.M1_BS <- cfa(SOC_TC, data = SOC.items[idx, ], estimator = "MLR")
+    omega.boot[i] <- round(semTools::reliability(SOC_TC.M1_BS)[2, 1], digits = 3)
+    AVE.boot[i] <- round(semTools::reliability(SOC_TC.M1_BS)[5, 1], digits = 3)
+}
+```
+
+90% confidence interval of omega coefficient
+```{r}
+round(quantile(omega.boot, c(0.05, 0.95)), digits = 3)
+```
+95% confidence interval of omega coefficient
+```{r}
+round(quantile(omega.boot, c(0.025, 0.975)), digits = 3)
+```
+99% confidence interval of omega coefficient
+```{r}
+round(quantile(omega.boot, c(0.005, 0.995)), digits = 3)
+```
+
+90% confidence interval of AVE coefficient
+```{r}
+round(quantile(AVE.boot, c(0.05, 0.95)), digits = 3)
+```
+
+95% confidence interval of AVE coefficient
+```{r}
+round(quantile(AVE.boot, c(0.025, 0.975)), digits = 3)
+```
+
+99% confidence interval of AVE coefficient
+```{r}
+round(quantile(AVE.boot, c(0.005, 0.995)), digits = 3)
+```

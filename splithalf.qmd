@@ -1,0 +1,115 @@
+---
+title: "Split-Half Reliability"
+format: html
+author:
+    - Melanie Viola Partsch
+    - Katharina Groskurth
+    - Matthias Blümke
+    - Isabelle Schmidt
+keywords:
+  - Survey Data
+  - Measurement
+  - Validity
+license: "CC BY-NC 4.0"
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(dplyr)
+
+packageVersion("rio")
+packageVersion("dplyr")
+
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+
+Add mean score of each half of the test/scale as new variable to data set
+
+```{r}
+example1 <- example1 %>% mutate(
+    test1 = (bfi2_1 + bfi2_16R) / 2,
+    test2 = (bfi2_31R + bfi2_46) / 2
+)
+
+```
+
+Compute correlation between both halves of the test/scale
+
+```{r}
+corT1T2 <- cor(example1$test1, example1$test2, use = "complete.obs", method = "pearson")
+round(corT1T2, digits = 3)
+```
+
+Apply Spearman-Brown formula to determine split-half reliablity coefficient
+
+```{r}
+SB <- (2 * corT1T2) / (1 + corT1T2)
+round(SB, digits = 3)
+```
+
+Determine confidence intervals of correlation coefficient and reliability coeffient by bootstrapping
+
+```{r}
+t.halves <- example1[, c("test1", "test2")]
+N <- nrow(t.halves)
+R <- 1000
+cor.boot <- NULL
+SB.boot <- NULL
+for (i in 1:R) {
+    idx <- sample.int(N, N, replace = TRUE)
+    cor.boot[i] <- cor(t.halves[idx, ], use = "complete.obs", method = "pearson")[1, 2]
+    SB.boot[i] <- (2 * cor.boot[i]) / (1 + cor.boot[i])
+}
+```
+
+90% confidence interval of correlation coefficient
+
+```{r}
+round(quantile(cor.boot, c(0.05, 0.95)), digits = 3)
+```
+95% confidence interval of correlation coefficient
+
+```{r}
+round(quantile(cor.boot, c(0.025, 0.975)), digits = 3)
+```
+99% confidence interval of correlation coefficient
+
+```{r}
+round(quantile(cor.boot, c(0.005, 0.995)), digits = 3)
+```
+90% confidence interval of reliability coefficient
+
+```{r}
+round(quantile(SB.boot, c(0.05, 0.95)), digits = 3)
+```
+95% confidence interval of reliability coefficient
+
+```{r}
+round(quantile(SB.boot, c(0.025, 0.975)), digits = 3)
+```
+99% confidence interval of reliability coefficient
+
+```{r}
+round(quantile(SB.boot, c(0.005, 0.995)), digits = 3)
+```

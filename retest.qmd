@@ -1,0 +1,90 @@
+---
+title: "Retest"
+format: html
+author:
+    - Melanie Viola Partsch
+    - Katharina Groskurth
+    - Matthias Blümke
+    - Isabelle Schmidt
+keywords:
+  - Survey Data
+  - Measurement
+  - Validity
+license: "CC BY-NC 4.0"
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+**!!!THE CODE DOES NOT WORK WITH THE EXAMPLE DATA BUT SHOULD EXEMPLIFY THE PROCEDURE!!!**
+
+Load the required packages
+```r
+#| label: setup
+library(rio)
+library(dplyr)
+
+packageVersion("rio")
+packageVersion("dplyr")
+
+```
+
+Read the example data.
+
+```r
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Add mean scale score of both test and retest as new variable to data set
+
+```r
+example1 <- example1 %>% mutate(
+    time1 = (bfi2_1_t1 + bfi2_16R_t1 + bfi2_31R_t1 + bfi2_46_t1) / 4,
+    time2 = (bfi2_1_t2 + bfi2_16R_t2 + bfi2_31R_t2 + bfi2_46_t2) / 4
+)
+```
+
+Compute correlation coefficient between test and retest scores as reliability coefficient
+
+```r
+corT1T2 <- cor(example1$time1, example1$time2, use = "complete.obs", method = "pearson")
+round(corT1T2, digits = 3)
+```
+
+Determine confidence intervals of correlation coefficient by bootstrapping
+
+```r
+t.times <- example1[, c("time1", "time2")]
+N <- nrow(t.times)
+R <- 1000
+cor.boot <- NULL
+for (i in 1:R) {
+    idx <- sample.int(N, N, replace = TRUE)
+    cor.boot[i] <- cor(t.times[idx, ], use = "complete.obs", method = "pearson")[1, 2]
+}
+```
+
+90% confidence interval of correlation coefficient
+```r
+round(quantile(cor.boot, c(0.05, 0.95)), digits = 3)
+```
+
+95% confidence interval of correlation coefficient
+```r
+round(quantile(cor.boot, c(0.025, 0.975)), digits = 3)
+```
+
+99% confidence interval of correlation coefficient
+```r
+round(quantile(cor.boot, c(0.005, 0.995)), digits = 3)
+```
