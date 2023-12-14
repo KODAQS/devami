@@ -1,0 +1,104 @@
+---
+title: "Measurement invariance testing"
+format: html
+citation: 
+    type: "document"
+    title: |
+        R Code for the Development and Validation of Measurement Instruments in the Social Sciences: Psychometric Analyses (Dimensionality, Reliability, Measurement Invariance)
+    container-title: GESIS, Cologne. Data File Version 1.0.0, 
+    author:
+      - Melanie Viola Partsch
+      - Katharina Groskurth
+      - Matthias Blümke
+      - Isabelle Schmidt
+    doi: 10.7802/1.1982
+    issued: 2020
+---
+
+
+
+Load the required packages
+```{r}
+#| label: setup
+library(rio)
+library(lavaan)
+
+packageVersion("rio")
+packageVersion("lavaan")
+```
+
+Read the example data.
+
+```{r}
+#| label: read_data
+example1 <- rio::import("example1.sav")
+```
+
+Specify and estimate tau-congeneric measurement model of 3 correlated factors using robust maximum likelihood estimation. 
+
+```{r}
+#| label: model
+EXT_3cF_TC <- "
+  SOC =~ NA*bfi2_1 + bfi2_16R + bfi2_31R + bfi2_46
+  ASS =~ NA*bfi2_6 + bfi2_21 + bfi2_36R + bfi2_51R
+  ENL =~ NA*bfi2_11R + bfi2_26R + bfi2_41 + bfi2_56
+  SOC ~~ 1*SOC
+  ASS ~~ 1*ASS
+  ENL ~~ 1*ENL"
+EXT_3cF_TC.M1 <- cfa(EXT_3cF_TC, data = example1, estimator = "MLR")
+```
+
+estimate model for metric measurement invariance testing across females and males.
+
+```{r}
+EXT_3cF.MET <- cfa(EXT_3cF_fLV,
+    data = example1, estimator = "MLR", group = "sex",
+    group.equal = c("loadings")
+)
+```
+Estimate model using robust maximum likelihood estimation. If data is categorical specify `estimator = "WLSMV"` and additionally specify `ordered = [character vector of variable names]`.
+
+Default for missing data handling is listwise deletion. For the use of FIML additionally specify `missing = "ML"`
+
+```{r}
+summary(EXT_3cF.MET, standardized = TRUE, fit.measures = TRUE)
+```
+
+estimate model for scalar measurement invariance testing across females and males
+
+```{r}
+EXT_3cF.SCA <- cfa(EXT_3cF_fLV, data = example1, estimator = "MLR", group = "sex", group.equal = c("loadings", "intercepts"))
+```
+
+  # Estimate model using robust maximum likelihood estimation. If data is categorical specify estimator = "WLSMV" and additionally specify      ordered = [character vector of variable names].
+  # Default for missing data handling is listwise deletion. For the use of FIML additionally specify missing = "ML"
+summary(EXT_3cF.SCA, standardized = TRUE, fit.measures = TRUE)
+
+
+
+#extract CFI, RMSEA and SRMR for the configural, metric and scalar measurement model
+EXT_3cF_fitCon<-fitMeasures(EXT_3cF.CON, c("cfi.scaled", "rmsea.scaled", "srmr"))
+EXT_3cF_fitMet<-fitMeasures(EXT_3cF.MET, c("cfi.scaled", "rmsea.scaled", "srmr"))
+EXT_3cF_fitSca<-fitMeasures(EXT_3cF.SCA, c("cfi.scaled", "rmsea.scaled", "srmr"))
+
+#calculate the delta/difference in CFI, RMSEA and SRMR for configural vs. metric and metric vs. scalar
+EXT_3cF_deltaCFI_CtoM<-round((EXT_3cF_fitCon[1]-EXT_3cF_fitMet[1]), digits = 3)
+EXT_3cF_deltaCFI_MtoS<-round((EXT_3cF_fitMet[1]-EXT_3cF_fitSca[1]), digits = 3)
+EXT_3cF_deltaRMSEA_CtoM<-round((EXT_3cF_fitCon[2]-EXT_3cF_fitMet[2]), digits = 3)
+EXT_3cF_deltaRMSEA_MtoS<-round((EXT_3cF_fitMet[2]-EXT_3cF_fitSca[2]), digits = 3)
+EXT_3cF_deltaSRMR_CtoM<-round((EXT_3cF_fitCon[3]-EXT_3cF_fitMet[3]), digits = 3)
+EXT_3cF_deltaSRMR_MtoS<-round((EXT_3cF_fitMet[3]-EXT_3cF_fitSca[3]), digits = 3)
+
+#DISPLAY RESULTS
+#CFI, RMSEA and SRMR for the configural, metric and scalar measurement model
+EXT_3cF_fitCon
+EXT_3cF_fitMet
+EXT_3cF_fitSca
+#delta/differences between fit indices from configural to metric model
+EXT_3cF_deltaCFI_CtoM
+EXT_3cF_deltaRMSEA_CtoM
+EXT_3cF_deltaSRMR_CtoM
+#delta/differences between fit indices from metric to scalar model
+EXT_3cF_deltaCFI_MtoS
+EXT_3cF_deltaRMSEA_MtoS
+EXT_3cF_deltaSRMR_MtoS
